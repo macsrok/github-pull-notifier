@@ -1,27 +1,22 @@
 require 'rubygems'
 require 'faraday'
-require 'JSON'
+require 'json'
+require 'yaml'
 
-TOKEN = ''.freeze
-ALLOWED_GITHUB_USERS = %w[].freeze
-SLACK_TOKEN =''.freeze
-CHANNEL_ID = ''.freeze
-GITHUB_TO_SLACK_MAP = {}.freeze
-OWNER = ''.freeze
-REPO = ''.freeze
+@config = YAML.load_file('config.yml')
 
 def fetch_pull_requests
-  @pull_requests ||= filter_pull_requests(make_get_request("https://api.github.com/repos/#{OWNER}/#{REPO}/pulls"))
+  @pull_requests ||= filter_pull_requests(make_get_request("https://api.github.com/repos/#{@config['OWNER']}/#{@config['REPO']}/pulls"))
 end
 
 def filter_pull_requests(pull_requests)
   pull_requests.select do |pull_request|
-    ALLOWED_GITHUB_USERS.include?(pull_request['user']['login'])
+    @config['ALLOWED_GITHUB_USERS'].include?(pull_request['user']['login'])
   end
 end
 
 def users_who_have_reviewed(pr)
-  url = "https://api.github.com/repos/beachyapp/#{OWNER}/#{REPO}/#{pr['number']}/reviews"
+  url = "https://api.github.com/repos/#{@config['OWNER']}/#{@config['REPO']}/pulls/#{pr['number']}/reviews"
   make_get_request(url).map do |review|
     review['user']['login']
   end
@@ -36,7 +31,7 @@ end
 def make_get_request(url)
   JSON.parse(Faraday.new(
     url: url,
-    headers: {'Authorization': "Bearer #{TOKEN}", 'Accept': 'application/vnd.github+json'}
+    headers: {'Authorization': "Bearer #{@config['GITHUB_TOKEN']}", 'Accept': 'application/vnd.github+json'}
   ).get.body)
 end
 
@@ -53,17 +48,17 @@ end
 def post_to_slack
   resp = Faraday.new(
     url: 'https://slack.com/api/chat.postMessage',
-    headers: { 'Authorization': "Bearer #{SLACK_TOKEN}", 'Content-type': 'application/json' }
+    headers: { 'Authorization': "Bearer #{@config['SLACK_TOKEN']}", 'Content-type': 'application/json' }
   ).post do |req|
-    req.body = { channel: CHANNEL_ID, text: build_slack_message, link_names: true }.to_json
+    req.body = { channel: @config['CHANNEL_ID'], text: build_slack_message }.to_json
   end
   puts resp.body
 end
 
 def build_slack_message
-  msg = ''
+  msg = "Howdy folks friendly reminder the following PRs need your review: \n"
   @notification_hash.each do |user, urls|
-    msg << "<@#{GITHUB_TO_SLACK_MAP[user.to_sym]}> friendly reminder the following PRs need your review:\n"
+    msg << "<@#{@config['GITHUB_TO_SLACK_MAP'][user]}>: \n"
     urls.each do |url|
       msg << "  #{url}\n"
     end

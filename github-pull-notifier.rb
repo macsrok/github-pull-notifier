@@ -3,7 +3,7 @@ require 'faraday'
 require 'json'
 require 'yaml'
 
-@config = YAML.load_file('config.yml')
+@config = YAML.load_file('/app/config.yml')
 
 def fetch_pull_requests
   @pull_requests ||= filter_pull_requests(make_get_request("https://api.github.com/repos/#{@config['OWNER']}/#{@config['REPO']}/pulls"))

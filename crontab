@@ -1,0 +1,1 @@
+45 9 * * 1-5 ruby /app/github-pull-notifier.rb >/dev/null 2>&1

@@ -3,7 +3,7 @@ require 'faraday'
 require 'json'
 require 'yaml'
 
-@config = YAML.load_file('/app/config.yml')
+@config = YAML.load_file('/config/config.yml')
 
 def fetch_pull_requests
   @pull_requests ||= filter_pull_requests(make_get_request("https://api.github.com/repos/#{@config['OWNER']}/#{@config['REPO']}/pulls"))
@@ -11,8 +11,16 @@ end
 
 def filter_pull_requests(pull_requests)
   pull_requests.select do |pull_request|
-    @config['ALLOWED_GITHUB_USERS'].include?(pull_request['user']['login'])
+    num_approvals = reviews_for_pull_request(pull_request).select do |r|
+      @config['ALLOWED_GITHUB_USERS'].include?(r['user']['login']) && r['state'] == 'APPROVED'
+    end.count
+
+    num_approvals < 2 && @config['ALLOWED_GITHUB_USERS'].include?(pull_request['user']['login']) && pull_request['state'] == 'open'
   end
+end
+
+def reviews_for_pull_request(pull_request)
+  make_get_request("https://api.github.com/repos/#{@config['OWNER']}/#{@config['REPO']}/pulls/#{pull_request['number']}/reviews")
 end
 
 def users_who_have_reviewed(pr)
@@ -45,24 +53,20 @@ def determine_which_prs_need_review
   puts @notifcations.inspect
 end
 
-def post_to_slack
+def post_to_slack(channel: 'U016DSM6QF8', message:)
   resp = Faraday.new(
     url: 'https://slack.com/api/chat.postMessage',
     headers: { 'Authorization': "Bearer #{@config['SLACK_TOKEN']}", 'Content-type': 'application/json' }
   ).post do |req|
-    req.body = { channel: @config['CHANNEL_ID'], text: build_slack_message }.to_json
+    req.body = { channel: channel, text: message }.to_json
   end
   puts resp.body
 end
 
-def build_slack_message
-  msg = "Howdy folks friendly reminder the following PRs need your review: \n"
-  @notification_hash.each do |user, urls|
-    msg << "<@#{@config['GITHUB_TO_SLACK_MAP'][user]}>: \n"
-    urls.each do |url|
-      msg << "  #{url}\n"
-    end
-    msg << "\n"
+def build_slack_message(user)
+  msg = "Howdy :wave:, friendly reminder the following PRs need your review: \n"
+  @notification_hash[user].each do |url|
+    msg << "  #{url}\n"
   end
   msg
 end
@@ -78,4 +82,8 @@ determine_which_prs_need_review
   end
 end
 
-post_to_slack
+@config['ALLOWED_GITHUB_USERS'].each do |user|
+  next if @notification_hash[user].nil?
+
+  post_to_slack channel: @config['GITHUB_TO_SLACK_MAP'][user], message: build_slack_message(user)
+end

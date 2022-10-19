@@ -1,4 +1,4 @@
-run with mounted volume to /config. The config file should be YAML formatted. The following options are available:
+run with mounted volume to /config. The config file should be YML formatted. The following options are available:
 
 ```
 GITHUB_TOKEN: GitHub API token. Required.
@@ -18,7 +18,7 @@ REPO: GitHub repo name. Required.
 ```
 
 Adjust entrypoint.sh to your needs. The default is to run the script @ 10:45AM Mon, Wed, Friday Central United States time.
-to change the time zone udjust line 4 of Dockerfile, and rebuild.
+To change the time zone, adjust the value on line 4 of Dockerfile, and rebuild.
 
 ```
 docker build .

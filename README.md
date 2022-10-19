@@ -17,7 +17,7 @@ OWNER: GitHub repo owner. Required.
 REPO: GitHub repo name. Required.
 ```
 
-Adjust entrypoint.sh to your needs. The default is to run the script @ 10:45AM Mon-Friday Central United States time.
+Adjust entrypoint.sh to your needs. The default is to run the script @ 10:45AM Mon, Wed, Friday Central United States time.
 to change the time zone udjust line 4 of Dockerfile, and rebuild.
 
 ```

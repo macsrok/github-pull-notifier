@@ -1,3 +1,5 @@
+This Repo is a simple (poorly written) ruby script that notifies team members about open PRS. The ruby script automatically runs via cron in a docker container to simplify deployment.
+
 run with mounted volume to /config. The config file should be YML formatted. The following options are available:
 
 ```

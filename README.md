@@ -18,6 +18,7 @@ REPO: GitHub repo name. Required.
 ```
 
 Adjust entrypoint.sh to your needs. The default is to run the script @ 10:45AM Mon-Friday Central United States time.
+to change the time zone udjust line 4 of Dockerfile, and rebuild.
 
 docker build .
 docker run -d --restart=unless-stopped -v /folder/containing/config.yaml:/config IMAGE_ID

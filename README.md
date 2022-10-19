@@ -17,7 +17,7 @@ OWNER: GitHub repo owner. Required.
 REPO: GitHub repo name. Required.
 ```
 
-Adjust entrypoint.sh to your needs. The default is to run the script @ 9:45AM Mon-Friday.
+Adjust entrypoint.sh to your needs. The default is to run the script @ 10:45AM Mon-Friday Central United States time.
 
 docker build .
 docker run -d --restart=unless-stopped -v /folder/containing/config.yaml:/config IMAGE_ID
